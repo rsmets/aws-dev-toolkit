@@ -1,6 +1,6 @@
 {
   "name": "aws-dev-toolkit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "AWS development toolkit — skills, agents, MCP servers, and hooks for building well-architected applications on AWS.",
   "author": {
     "name": "rsmets"

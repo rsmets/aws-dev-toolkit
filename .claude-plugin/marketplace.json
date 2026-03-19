@@ -13,7 +13,7 @@
       "name": "aws-dev-toolkit",
       "source": "./plugins/aws-dev-toolkit",
       "description": "AWS development toolkit with skills, agents, MCP servers, and hooks for building well-architected infrastructure and applications on AWS.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "author": {
         "name": "rsmets"
       },
