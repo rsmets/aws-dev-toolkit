@@ -1,10 +1,10 @@
 {
   "name": "aws-dev-toolkit",
-  "version": "0.3.0",
-  "description": "AWS development toolkit — skills, agents, MCP servers, and hooks for building well-architected applications on AWS.",
+  "version": "0.4.0",
+  "description": "AWS development toolkit — 25 skills, 11 agents, 5 MCP servers, and hooks for building, migrating, and reviewing well-architected applications on AWS.",
   "author": {
     "name": "rsmets"
   },
-  "keywords": ["aws", "cdk", "cloudformation", "terraform", "serverless", "well-architected", "iac"],
+  "keywords": ["aws", "cdk", "cloudformation", "terraform", "serverless", "well-architected", "iac", "migration", "gcp", "azure", "bedrock"],
   "license": "MIT"
 }

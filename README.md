@@ -47,9 +47,13 @@ Sub-agents are spun up automatically when Claude determines a specialist is need
 
 ```
 "Explore my AWS environment and summarize what's deployed"      → aws-explorer
+"Run a Well-Architected review on my production workload"       → well-architected-reviewer
 "Review my IaC changes before I deploy"                         → iac-reviewer
+"Help me plan a migration from Azure to AWS"                    → migration-advisor
 "Help me pick the right Bedrock model for classification"       → bedrock-sme
 "I have a PoC agent, help me productionize it"                  → agentcore-sme
+"Should I use ECS or EKS for this workload?"                    → container-sme
+"Help me optimize my AWS bill"                                  → cost-optimizer
 ```
 
 ### MCP Servers
@@ -108,6 +112,7 @@ These are used behind the scenes by skills and agents — you don't need to invo
 | `aws-docs` | `awslabs.aws-documentation-mcp-server` | Latest AWS documentation and code samples |
 | `aws-core` | `awslabs.core-mcp-server` | Proxy server that dynamically imports other AWS MCP servers |
 | `aws-cost` | `awslabs.cost-analysis-mcp-server` | Cost analysis and optimization |
+| `aws-well-architected` | `awslabs.well-architected-mcp-server` | Well-Architected Tool API for reviews, lenses, and improvement plans |
 
 ### Hooks
 
@@ -133,6 +138,13 @@ Hooks run automatically on events. Currently configured:
 2. Get guidance on adding DeepEval for model evaluation
 3. Choose between AgentCore native observability or Langfuse
 4. Walk through the PoC → production migration path
+
+**"Run a Well-Architected review on my workload"**
+1. The `well-architected-reviewer` agent scans your AWS environment
+2. Evaluates each of the six pillars with real CLI evidence
+3. Rates findings as HRI (high risk), MRI (medium risk), or LRI (low risk)
+4. Produces a structured report with prioritized remediation steps
+5. Use the `aws-well-architected` MCP server to track findings in the WA Tool
 
 **"We're moving from GCP to AWS"**
 1. Describe your GCP environment — `gcp-to-aws` maps services to AWS equivalents
@@ -161,29 +173,49 @@ Hooks run automatically on events. Currently configured:
 
 #### `aws-dev-toolkit`
 
-**Skills:**
+**Skills (25):**
 | Skill | Trigger | Description |
 |---|---|---|
 | `aws-architect` | Auto | Design & review AWS architectures against Well-Architected Framework |
+| `well-architected` | Auto | Formal Well-Architected Framework reviews with pillar-by-pillar assessment |
+| `customer-ideation` | Auto | Guided ideation from concept to AWS architecture with service selection |
 | `iac-scaffold` | `/iac-scaffold <framework> <description>` | Scaffold CDK, Terraform, SAM, or CloudFormation projects |
 | `aws-debug` | Auto | Debug AWS deployment failures, Lambda errors, permission issues |
-| `cost-check` | Auto | Analyze and optimize AWS costs |
 | `security-review` | Auto | Audit IaC and AWS configs for security issues |
-| `strands-agent` | `/strands-agent <description>` | Scaffold Strands Agents SDK projects on Bedrock AgentCore (TS/Python) |
+| `cost-check` | Auto | Analyze and optimize AWS costs |
 | `bedrock-cost` | Auto | Bedrock pricing, token economics, and cost modeling |
+| `strands-agent` | `/strands-agent <description>` | Scaffold Strands Agents SDK projects on Bedrock AgentCore (TS/Python) |
+| `agent-eval` | Auto | Evaluate and benchmark AI agent performance |
+| `lambda` | Auto | Design, build, and optimize Lambda functions — runtimes, cold starts, concurrency |
+| `ec2` | Auto | Design, configure, and optimize EC2 workloads — instance selection, AMIs, ASGs |
+| `ecs` | Auto | Deploy and troubleshoot ECS workloads — task definitions, services, Fargate |
+| `eks` | Auto | Deploy and troubleshoot EKS clusters — Kubernetes on AWS, Karpenter, IRSA |
+| `s3` | Auto | S3 bucket configuration, storage optimization, and access patterns |
+| `dynamodb` | Auto | DynamoDB table design, access patterns, single-table design, GSIs |
+| `api-gateway` | Auto | Design and configure API Gateway — REST vs HTTP APIs, authorizers, throttling |
+| `cloudfront` | Auto | CloudFront distributions — caching, origins, Lambda@Edge, Functions |
+| `iam` | Auto | IAM policies, roles, permission boundaries, and least-privilege design |
+| `networking` | Auto | VPC architecture, subnets, security groups, Transit Gateway, VPC endpoints |
+| `messaging` | Auto | SQS, SNS, and EventBridge — queue design, fan-out, event routing |
+| `observability` | Auto | CloudWatch, X-Ray, and OpenTelemetry — dashboards, alarms, tracing |
+| `step-functions` | Auto | Step Functions workflows — state machines, error handling, service integrations |
 | `gcp-to-aws` | Auto | GCP to AWS migration service mapping, gotchas, and environment assessment |
 | `azure-to-aws` | Auto | Azure to AWS migration service mapping, gotchas, and environment assessment |
-| `customer-ideation` | Auto | Guided ideation from concept to AWS architecture with Well-Architected review |
-| `well-architected` | Auto | Formal Well-Architected Framework reviews with pillar-by-pillar assessment |
 
-**Sub-Agents:**
+**Sub-Agents (11):**
 | Agent | Model | Description |
 |---|---|---|
-| `aws-explorer` | Haiku | Read-only AWS environment exploration and context gathering |
-| `iac-reviewer` | Sonnet | Reviews IaC changes for correctness, security, and best practices |
-| `bedrock-sme` | Sonnet | Bedrock subject matter expert emphasizing cost-efficient usage patterns |
-| `agentcore-sme` | Sonnet | AgentCore expert for PoC-to-production agent development with DeepEval and Langfuse guidance |
-| `well-architected-reviewer` | Opus | Deep Well-Architected Framework reviews with evidence-based assessment commands |
+| `aws-explorer` | Opus | Read-only AWS environment exploration and context gathering |
+| `well-architected-reviewer` | Opus | Deep Well-Architected Framework reviews with evidence-based assessment |
+| `iac-reviewer` | Opus | Reviews IaC changes for correctness, security, and best practices |
+| `migration-advisor` | Opus | Cloud migration expert — 6Rs framework, wave planning, cutover strategy |
+| `bedrock-sme` | Opus | Bedrock subject matter expert emphasizing cost-efficient usage patterns |
+| `agentcore-sme` | Opus | AgentCore expert for PoC-to-production agent development |
+| `container-sme` | Opus | Container expert for ECS, EKS, and Fargate architecture decisions |
+| `serverless-sme` | Opus | Serverless architecture expert for Lambda, API Gateway, Step Functions |
+| `networking-sme` | Opus | AWS networking expert — VPC design, hybrid connectivity, DNS, CDN |
+| `observability-sme` | Opus | CloudWatch, X-Ray, and OpenTelemetry observability expert |
+| `cost-optimizer` | Opus | Deep AWS cost optimization — rightsizing, Savings Plans, waste elimination |
 
 **MCP Servers:**
 | Server | Package | Description |
@@ -209,30 +241,52 @@ Hooks run automatically on events. Currently configured:
 ```
 sup-virtual-sa/
 ├── .claude-plugin/
-│   └── marketplace.json          # Marketplace catalog
+│   └── marketplace.json              # Marketplace catalog
 ├── plugins/
-│   └── aws-dev-toolkit/          # First plugin
+│   └── aws-dev-toolkit/              # First plugin
 │       ├── .claude-plugin/
-│       │   └── plugin.json       # Plugin manifest
-│       ├── .mcp.json             # MCP server configs
-│       ├── skills/               # Agent skills
-│       │   ├── aws-architect/
-│       │   ├── iac-scaffold/
-│       │   ├── aws-debug/
-│       │   ├── cost-check/
-│       │   ├── security-review/
-│       │   ├── bedrock-cost/
-│       │   ├── gcp-to-aws/
-│       │   ├── azure-to-aws/
-│       │   ├── customer-ideation/
-│       │   └── well-architected/
-│       ├── agents/               # Sub-agents
+│       │   └── plugin.json           # Plugin manifest
+│       ├── .mcp.json                 # MCP server configs (5 servers)
+│       ├── skills/                   # 24 skills
+│       │   ├── aws-architect/        # Architecture design & review
+│       │   ├── well-architected/     # Formal WA Framework reviews
+│       │   ├── customer-ideation/    # Idea → AWS architecture workflow
+│       │   ├── iac-scaffold/         # IaC project scaffolding
+│       │   ├── aws-debug/            # Deployment & runtime debugging
+│       │   ├── security-review/      # Security auditing
+│       │   ├── cost-check/           # Cost analysis & optimization
+│       │   ├── bedrock-cost/         # Bedrock pricing & cost modeling
+│       │   ├── strands-agent/        # Strands Agents SDK scaffolding
+│       │   ├── agent-eval/           # AI agent evaluation
+│       │   ├── lambda/               # Lambda functions
+│       │   ├── ec2/                  # EC2 instances
+│       │   ├── ecs/                  # ECS containers
+│       │   ├── eks/                  # EKS Kubernetes
+│       │   ├── s3/                   # S3 storage
+│       │   ├── dynamodb/             # DynamoDB tables
+│       │   ├── api-gateway/          # API Gateway
+│       │   ├── cloudfront/           # CloudFront CDN
+│       │   ├── iam/                  # IAM policies & roles
+│       │   ├── networking/           # VPC & networking
+│       │   ├── messaging/            # SQS, SNS, EventBridge
+│       │   ├── observability/        # CloudWatch, X-Ray
+│       │   ├── step-functions/       # Step Functions workflows
+│       │   ├── gcp-to-aws/           # GCP migration mapping
+│       │   └── azure-to-aws/         # Azure migration mapping
+│       ├── agents/                   # 11 sub-agents
 │       │   ├── aws-explorer.md
+│       │   ├── well-architected-reviewer.md
 │       │   ├── iac-reviewer.md
+│       │   ├── migration-advisor.md
 │       │   ├── bedrock-sme.md
-│       │   └── agentcore-sme.md
+│       │   ├── agentcore-sme.md
+│       │   ├── container-sme.md
+│       │   ├── serverless-sme.md
+│       │   ├── networking-sme.md
+│       │   ├── observability-sme.md
+│       │   └── cost-optimizer.md
 │       └── hooks/
-│           └── hooks.json
+│           └── hooks.json            # PostToolUse IaC validation
 └── README.md
 ```
 
@@ -260,7 +314,6 @@ The [awslabs/mcp](https://awslabs.github.io/mcp/servers) project provides 60+ of
 | `awslabs.bedrock-mcp-server` | Bedrock AI model integration |
 | `awslabs.cloudwatch-mcp-server` | Metrics, alarms, and log analysis |
 | `awslabs.iam-mcp-server` | IAM user, role, and policy management |
-| `awslabs.well-architected-mcp-server` | Well-Architected Framework reviews |
 
 ## License
 
