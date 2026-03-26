@@ -127,6 +127,27 @@ Hooks run automatically on events. Currently configured:
 3. Choose between AgentCore native observability or Langfuse
 4. Walk through the PoC → production migration path
 
+**"We're moving from GCP to AWS"**
+1. Describe your GCP environment — `gcp-to-aws` maps services to AWS equivalents
+2. Run the assessment commands to inventory what's deployed
+3. Review the gotchas for your specific services (global VPCs, Spanner, BigQuery)
+4. Use `iac-scaffold` to generate the target AWS infrastructure
+5. Ask `migration-advisor` for wave planning and cutover strategy
+
+**"We're moving from Azure to AWS"**
+1. Describe your Azure environment — `azure-to-aws` maps services to AWS equivalents
+2. Run az CLI discovery commands to inventory resources
+3. Pay special attention to identity migration (Azure AD → IAM Identity Center)
+4. Review Cosmos DB and Synapse migration paths (these are complex)
+5. Use `iac-scaffold` to generate the target AWS infrastructure
+
+**"I have an idea for something on AWS"**
+1. Describe your idea — `customer-ideation` guides you through discovery
+2. Answer the structured questions about requirements and constraints
+3. Review the proposed architecture with Well-Architected checklist
+4. Use `/iac-scaffold` to generate starter infrastructure code
+5. Ask for a cost estimate before committing
+
 ## What's Included
 
 ### Plugins
@@ -143,6 +164,9 @@ Hooks run automatically on events. Currently configured:
 | `security-review` | Auto | Audit IaC and AWS configs for security issues |
 | `strands-agent` | `/strands-agent <description>` | Scaffold Strands Agents SDK projects on Bedrock AgentCore (TS/Python) |
 | `bedrock-cost` | Auto | Bedrock pricing, token economics, and cost modeling |
+| `gcp-to-aws` | Auto | GCP to AWS migration service mapping, gotchas, and environment assessment |
+| `azure-to-aws` | Auto | Azure to AWS migration service mapping, gotchas, and environment assessment |
+| `customer-ideation` | Auto | Guided ideation from concept to AWS architecture with Well-Architected review |
 
 **Sub-Agents:**
 | Agent | Model | Description |
@@ -187,7 +211,10 @@ sup-virtual-sa/
 │       │   ├── aws-debug/
 │       │   ├── cost-check/
 │       │   ├── security-review/
-│       │   └── bedrock-cost/
+│       │   ├── bedrock-cost/
+│       │   ├── gcp-to-aws/
+│       │   ├── azure-to-aws/
+│       │   └── customer-ideation/
 │       ├── agents/               # Sub-agents
 │       │   ├── aws-explorer.md
 │       │   ├── iac-reviewer.md

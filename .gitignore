@@ -33,3 +33,6 @@ cdk.out/
 
 # Plugin data
 *.log
+
+# Claude Code auto memory
+MEMORY/

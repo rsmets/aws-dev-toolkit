@@ -1,3 +1,15 @@
 {
-  "hooks": {}
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "If the file that was just edited has an IaC-related extension (.tf, .tfvars, template.yaml, template.yml, *-stack.ts, *-stack.py, *.cdk.ts, *.sam.yaml, *.sam.yml, serverless.yml, cloudformation.yaml, cloudformation.yml, cdk.json), respond with a brief reminder: '⚠️ IaC file modified — remember to validate before deploying: `cdk synth && cdk diff` (CDK), `terraform validate && terraform plan` (Terraform), or `sam validate && sam build` (SAM).' If the file is NOT an IaC file, respond with an empty string."
+          }
+        ]
+      }
+    ]
+  }
 }
