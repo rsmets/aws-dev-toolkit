@@ -36,3 +36,7 @@ cdk.out/
 
 # Claude Code auto memory
 MEMORY/
+
+# Forked repos
+claude-plugins-official/
+agent-plugins/
