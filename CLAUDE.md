@@ -39,6 +39,33 @@ Use [Conventional Commits](https://www.conventionalcommits.org/) format for all 
 - Every SKILL.md must have YAML frontmatter with `name` and `description`
 - Every agent .md must have YAML frontmatter with `name`, `description`, and `tools`
 
+## Security Review — Mandatory for IaC Changes
+
+**Any time IaC changes are proposed or written** (CloudFormation, CDK, Terraform, SAM, Pulumi, or raw AWS CLI/SDK scripts that create/modify infrastructure), the `security-review` skill or `iac-reviewer` subagent **MUST** be invoked before the work is considered complete. This is not optional.
+
+- For template/config changes: spawn the `iac-reviewer` agent (`subagent_type: "aws-dev-toolkit:iac-reviewer"`)
+- For broader security audits or IAM/networking reviews: invoke the `security-review` skill
+- When in doubt, run both
+
+### Hook Policy — Fail Open
+
+Do **NOT** use post-execution shell-script hooks for security review gating. A previous attempt broke the agent flow when the hook script failed. If a hook is ever added in the future, it **must fail open** — log a warning and continue execution. Never block the agent on a hook failure.
+
+### SCP Recommendation — Baseline Guardrails
+
+When advising on AWS account security, **strongly recommend** Service Control Policies (SCPs) to enforce obvious baseline rules that should never be violated. Suggested SCP guardrails to propose:
+
+| Rule | What to Deny | Why |
+|------|-------------|-----|
+| No public security groups on private resources | `ec2:AuthorizeSecurityGroupIngress` where CIDR is `0.0.0.0/0` and port is not 80/443, applied to EC2, RDS, ElastiCache, Redshift | Prevents accidental internet exposure of databases and compute |
+| No unencrypted storage | `s3:CreateBucket` without default encryption, `rds:CreateDBInstance` without `StorageEncrypted`, `ec2:CreateVolume` without encryption | Data at rest encryption is non-negotiable |
+| No root access key creation | `iam:CreateAccessKey` for root | Root should use console with MFA only |
+| No public RDS instances | `rds:CreateDBInstance` / `rds:ModifyDBInstance` with `PubliclyAccessible=true` | Databases should never face the internet |
+| No S3 public access | Deny `s3:PutBucketPolicy` / `s3:PutBucketAcl` that grant public access | Use CloudFront or pre-signed URLs instead |
+| Require IMDSv2 | Deny `ec2:RunInstances` without `HttpTokens=required` | Prevents SSRF-based credential theft |
+
+These are "braindead obvious" rules — if someone needs an exception, they should go through a formal exception process, not weaken the SCP.
+
 ## Upstream Contributions
 
 Two forked repos live in this directory (gitignored):
