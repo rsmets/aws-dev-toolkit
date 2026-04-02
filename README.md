@@ -1,6 +1,6 @@
 # sup-virtual-sa
 
-A Claude Code plugin marketplace for AWS development. Ships 30 skills, 11 sub-agents, 5 MCP servers, and hooks that help you build well-architected applications on AWS.
+A Claude Code plugin marketplace for AWS development. Ships 30 skills, 11 sub-agents, 3 MCP servers, and hooks that help you build well-architected applications on AWS.
 
 ## Quick Start
 
@@ -69,7 +69,7 @@ Sub-agents are spun up automatically when Claude determines a specialist is need
 
 ### MCP Servers
 
-The plugin references several AWS MCP servers. In Kiro, MCP configs are not auto-loaded from the plugin directory — you need to add them to your Kiro MCP settings.
+The plugin ships 3 MCP servers. In Kiro, MCP configs are not auto-loaded from the plugin directory — you need to add them to your Kiro MCP settings.
 
 Add to `~/.kiro/settings/mcp.json` (user-level) or `.kiro/settings/mcp.json` (workspace-level):
 
@@ -77,38 +77,24 @@ Add to `~/.kiro/settings/mcp.json` (user-level) or `.kiro/settings/mcp.json` (wo
 {
   "mcpServers": {
     // AWS IaC validation and security scanning
-    "aws-iac": {
+    "awsiac": {
       "command": "uvx",
       "args": ["awslabs.aws-iac-mcp-server@latest"],
       "env": { "FASTMCP_LOG_LEVEL": "ERROR" },
       "disabled": false
     },
-    // AWS documentation search
-    "aws-docs": {
+    // AWS documentation, recommendations, and regional availability
+    "awsknowledge": {
+      "type": "http",
+      "url": "https://knowledge-mcp.global.api.aws",
+      "disabled": false
+    },
+    // AWS pricing data and cost analysis
+    "awspricing": {
       "command": "uvx",
-      "args": ["awslabs.aws-documentation-mcp-server@latest"],
+      "args": ["awslabs.aws-pricing-mcp-server@latest"],
       "env": { "FASTMCP_LOG_LEVEL": "ERROR" },
-      "disabled": false
-    },
-    // Core AWS resource access
-    "aws-core": {
-      "command": "uvx",
-      "args": ["awslabs.core-mcp-server@latest"],
-      "env": { "FASTMCP_LOG_LEVEL": "ERROR", "AWS_PROFILE": "default" },
-      "disabled": false
-    },
-    // Cost analysis
-    "aws-cost": {
-      "command": "uvx",
-      "args": ["awslabs.cost-analysis-mcp-server@latest"],
-      "env": { "FASTMCP_LOG_LEVEL": "ERROR", "AWS_PROFILE": "default" },
-      "disabled": false
-    },
-    // Well-Architected Framework reviews
-    "aws-well-architected": {
-      "command": "uvx",
-      "args": ["awslabs.well-architected-mcp-server@latest"],
-      "env": { "FASTMCP_LOG_LEVEL": "ERROR", "AWS_PROFILE": "default" },
+      "timeout": 120000,
       "disabled": false
     }
   }
@@ -117,13 +103,11 @@ Add to `~/.kiro/settings/mcp.json` (user-level) or `.kiro/settings/mcp.json` (wo
 
 These are used behind the scenes by skills and agents — you don't need to invoke them directly.
 
-| Server | Package | Description |
-|---|---|---|
-| `aws-iac` | `awslabs.aws-iac-mcp-server` | CDK/Terraform/CloudFormation development with security scanning |
-| `aws-docs` | `awslabs.aws-documentation-mcp-server` | Latest AWS documentation and code samples |
-| `aws-core` | `awslabs.core-mcp-server` | Proxy server that dynamically imports other AWS MCP servers |
-| `aws-cost` | `awslabs.cost-analysis-mcp-server` | Cost analysis and optimization |
-| `aws-well-architected` | `awslabs.well-architected-mcp-server` | Well-Architected Tool API for reviews, lenses, and improvement plans |
+| Server | Type | Package / URL | Description |
+|---|---|---|---|
+| `awsiac` | stdio | `awslabs.aws-iac-mcp-server` | CDK/Terraform/CloudFormation development with security scanning |
+| `awsknowledge` | http | `https://knowledge-mcp.global.api.aws` | AWS documentation search, service recommendations, and regional availability |
+| `awspricing` | stdio | `awslabs.aws-pricing-mcp-server` | AWS service pricing data, cost reports, and IaC cost analysis |
 
 ### Hooks
 
@@ -170,7 +154,7 @@ Hooks run automatically on events. Currently configured:
 2. Evaluates each of the six pillars with real CLI evidence
 3. Rates findings as HRI (high risk), MRI (medium risk), or LRI (low risk)
 4. Produces a structured report with prioritized remediation steps
-5. Use the `aws-well-architected` MCP server to track findings in the WA Tool
+5. Use the `awsknowledge` MCP server for AWS documentation and best-practice references
 
 **"We're moving from GCP to AWS"**
 1. Describe your GCP environment — `gcp-to-aws` maps services to AWS equivalents
@@ -253,14 +237,12 @@ Hooks run automatically on events. Currently configured:
 | `observability-sme` | Opus | CloudWatch, X-Ray, and OpenTelemetry observability expert |
 | `cost-optimizer` | Opus | Deep AWS cost optimization — rightsizing, Savings Plans, waste elimination |
 
-**MCP Servers:**
-| Server | Package | Description |
-|---|---|---|
-| `aws-iac` | `awslabs.aws-iac-mcp-server` | CDK/Terraform/CloudFormation development with security scanning |
-| `aws-docs` | `awslabs.aws-documentation-mcp-server` | Latest AWS documentation and code samples |
-| `aws-core` | `awslabs.core-mcp-server` | Proxy server that dynamically imports other AWS MCP servers |
-| `aws-cost` | `awslabs.cost-analysis-mcp-server` | Cost analysis and optimization |
-| `aws-well-architected` | `awslabs.well-architected-mcp-server` | Well-Architected Tool API for reviews, lenses, and improvement plans |
+**MCP Servers (3):**
+| Server | Type | Package / URL | Description |
+|---|---|---|---|
+| `awsiac` | stdio | `awslabs.aws-iac-mcp-server` | CDK/Terraform/CloudFormation development with security scanning |
+| `awsknowledge` | http | `https://knowledge-mcp.global.api.aws` | AWS documentation search, service recommendations, and regional availability |
+| `awspricing` | stdio | `awslabs.aws-pricing-mcp-server` | AWS service pricing data, cost reports, and IaC cost analysis |
 
 **Hooks:**
 - Post-edit reminder to validate IaC files before deploying
@@ -282,7 +264,7 @@ sup-virtual-sa/
 │   └── aws-dev-toolkit/              # First plugin
 │       ├── .claude-plugin/
 │       │   └── plugin.json           # Plugin manifest
-│       ├── .mcp.json                 # MCP server configs (5 servers)
+│       ├── .mcp.json                 # MCP server configs (3 servers)
 │       ├── skills/                   # 30 skills
 │       │   ├── aws-plan/             # End-to-end architecture planning
 │       │   ├── aws-architect/        # Architecture design & review
@@ -355,6 +337,7 @@ The [awslabs/mcp](https://awslabs.github.io/mcp/servers) project provides 60+ of
 | `awslabs.bedrock-mcp-server` | Bedrock AI model integration |
 | `awslabs.cloudwatch-mcp-server` | Metrics, alarms, and log analysis |
 | `awslabs.iam-mcp-server` | IAM user, role, and policy management |
+| `awslabs.cost-analysis-mcp-server` | Cost analysis and optimization |
 
 ## License
 

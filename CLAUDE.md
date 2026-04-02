@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is the **aws-dev-toolkit** Claude Code plugin — a comprehensive AWS development toolkit with 30 skills, 11 specialized agents, and 5 MCP servers for building, migrating, and reviewing well-architected applications on AWS.
+This is the **aws-dev-toolkit** Claude Code plugin — a comprehensive AWS development toolkit with 30 skills, 11 specialized agents, and 3 MCP servers for building, migrating, and reviewing well-architected applications on AWS.
 
 ## Repository Structure
 
@@ -10,7 +10,7 @@ This is the **aws-dev-toolkit** Claude Code plugin — a comprehensive AWS devel
 sup-virtual-sa/
 ├── plugins/aws-dev-toolkit/       # The plugin
 │   ├── .claude-plugin/plugin.json # Plugin manifest
-│   ├── .mcp.json                  # 5 MCP server configs
+│   ├── .mcp.json                  # 3 MCP server configs
 │   ├── skills/                    # 30 skills (each with SKILL.md)
 │   ├── agents/                    # 11 sub-agents
 │   └── hooks/hooks.json           # Hook definitions

@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "mcp__plugin_aws-dev-toolkit_aws-docs__search_documentation",
-      "mcp__plugin_aws-dev-toolkit_aws-docs__read_sections"
+      "mcp__plugin_aws-dev-toolkit_aws-docs__read_sections",
+      "mcp__plugin_aws-sa-toolkit_workplace-chat-mcp__batch_get_conversation_history",
+      "mcp__plugin_aws-sa-toolkit_workplace-chat-mcp__batch_get_thread_replies",
+      "mcp__plugin_aws-sa-toolkit_aws-knowledge-mcp-server__aws___search_documentation",
+      "mcp__plugin_aws-dev-toolkit_awsknowledge__aws___search_documentation"
     ]
   }
 }
