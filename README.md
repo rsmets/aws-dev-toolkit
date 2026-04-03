@@ -1,15 +1,12 @@
-# sup-virtual-sa
+# aws-dev-toolkit
 
-A Claude Code plugin marketplace for AWS development. Ships 30 skills, 11 sub-agents, 3 MCP servers, and hooks that help you build well-architected applications on AWS.
+A Claude Code plugin for AWS development. Ships 30 skills, 11 sub-agents, 3 MCP servers, and hooks that help you build well-architected applications on AWS.
 
 ## Quick Start
 
 ```bash
-# Add the marketplace
-/plugin marketplace add rsmets/startup-virtual-sa
-
-# Install the AWS dev toolkit
-/plugin install aws-dev-toolkit@sup-virtual-sa
+# Add from the marketplace
+claude plugins add rsmets/aws-dev-toolkit
 ```
 
 Or test locally during development:
@@ -257,7 +254,7 @@ Hooks run automatically on events. Currently configured:
 ## Project Structure
 
 ```
-sup-virtual-sa/
+aws-dev-toolkit/
 ├── .claude-plugin/
 │   └── marketplace.json              # Marketplace catalog
 ├── plugins/
