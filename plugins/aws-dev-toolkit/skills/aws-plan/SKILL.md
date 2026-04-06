@@ -61,7 +61,7 @@ Use the `cost-check` skill or `aws-pricing` MCP tools to produce a rough monthly
 - Scale cost (at projected peak)
 - Cost optimization opportunities (Savings Plans, Spot, right-sizing)
 
-For AI/ML workloads, also invoke the `bedrock-cost` skill.
+For AI/ML workloads, also invoke the `bedrock` skill.
 
 ### Phase 5: Deliver
 
