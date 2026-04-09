@@ -1,8 +1,8 @@
 # Building an AI Toolkit Your Org Actually Uses
 
-Claude Code plugins let you package domain knowledge (skills, agents, and MCP servers) into a single installable unit. Shared across an engineering org, they compound developer experience. Provided to customers at onboarding, they put working tools and best practices directly in the local dev environment. This post walks through the patterns for structuring a plugin so that knowledge compounds over time rather than scattering across disconnected tools.
+Claude Code plugins let you package domain knowledge (skills, agents, and MCP servers) into a single installable unit. Install it once and it compounds across the org. Hand it to customers at onboarding and they get working tools and best practices directly in their local dev environment. This post walks through the patterns for structuring a plugin so that knowledge compounds over time, best practices stay consistent across teams, and teams get more productive.
 
-I'll use [**aws-dev-toolkit**](https://github.com/rsmets/aws-dev-toolkit), a Claude Code plugin I built with 34 skills, 11 agents, and 3 MCP servers, as the running case study. AWS is a good fit for this because its service catalog is large, constantly evolving, and full of overlapping options. Engineers need help navigating it, and that kind of complexity is exactly where a consolidated toolkit pays off. The principles apply to any domain with similar characteristics.
+I'll use [**aws-dev-toolkit**](https://github.com/rsmets/aws-dev-toolkit), a Claude Code plugin for interfacing with AWS that I built with 34 skills, 11 agents, and 3 MCP servers, as the running case study. AWS is a good fit for this because its service catalog is large, constantly evolving, and full of overlapping options. Engineers need help navigating it, and that kind of complexity is exactly where a consolidated toolkit pays off. The principles apply to any domain with similar characteristics.
 
 ## Pattern 1: Two Types of Skills
 
@@ -22,7 +22,7 @@ Skills encode knowledge. Agents act on it. Skills are reference material and pro
 
 The practical consequence: agents that need to compose must be colocated. A planning agent that hands off to a security reviewer, which hands off to a cost estimator, needs all three in the same plugin. Claude Code's plugin architecture doesn't support cross-plugin imports at the filesystem level, so colocation is what makes composition possible.
 
-In `aws-dev-toolkit`, this is 11 agents via Claude Code's [agent system](https://code.claude.com/docs/en/agents):
+In `aws-dev-toolkit`, this is 11 agents via Claude Code's [agent system](https://code.claude.com/docs/en/agents). The value is in **composition**: when `aws-plan` runs, it doesn't try to do everything itself. It spawns `iac-reviewer` for security, `cost-optimizer` for estimates, `well-architected-reviewer` for framework alignment. Each agent has its own system prompt, tool access, and focus. The parent orchestrates. Here's what it has to work with:
 
 | Agent | Purpose |
 |-------|---------|
@@ -38,8 +38,6 @@ In `aws-dev-toolkit`, this is 11 agents via Claude Code's [agent system](https:/
 | **observability-sme** | CloudWatch, X-Ray, OpenTelemetry strategies |
 | **cost-optimizer** | Rightsizing, Savings Plans, data transfer waste |
 
-The value is in **composition**. When `aws-plan` runs, it doesn't try to do everything itself. It spawns `iac-reviewer` for security, `cost-optimizer` for estimates, `well-architected-reviewer` for framework alignment. Each agent has its own system prompt, tool access, and focus. The parent orchestrates.
-
 ## Shared Infrastructure: MCP Servers
 
 MCP servers provide shared data access that any skill or agent in the plugin can use. `aws-dev-toolkit` connects to three:
@@ -52,11 +50,11 @@ MCP servers provide shared data access that any skill or agent in the plugin can
 
 ## Pattern 3: Colocate What Composes
 
-The core argument for consolidation: **cross-cutting concerns need a home.**
+Agent composition only works if the agents can find each other. In practice, that means colocation. **Cross-cutting concerns need a home.**
 
 Security review isn't a feature of Lambda. Cost estimation isn't a feature of DynamoDB. Well-Architected alignment isn't a feature of any single service. These concerns cut across every workload. If your toolkit is split into per-service plugins, there's no natural place for them, and they tend not to get built.
 
-Looking at the existing [awslabs/agent-plugins](https://github.com/awslabs/agent-plugins) landscape (7 plugins, ~21 skills across ~8 services), the per-service skills are solid, but there are gaps in cross-cutting areas: no agents, no workflow orchestration, no security enforcement, no Well-Architected reviews. That's not a knock on those plugins; it illustrates the pattern. When tooling is organized per-service, the connective tissue tends to be missing.
+Looking at the existing [awslabs/agent-plugins](https://github.com/awslabs/agent-plugins) landscape (7 plugins, ~21 skills across ~8 services), the per-service skills are solid, but there are gaps in cross-cutting areas: no agents, no workflow orchestration, no security enforcement, no Well-Architected reviews. When tooling is organized per-service, the connective tissue tends to be missing.
 
 [Anthropic's research on harness design](https://www.anthropic.com/engineering/harness-design-long-running-apps) is relevant here: integrated multi-agent systems outperform narrow single-purpose tools for complex tasks. Cursor's [Composer 2 report](https://cursor.com/resources/Composer2.pdf) found the same: complex multi-service workflows rank low on RL task completion without prescriptive harnesses.
 
@@ -64,13 +62,13 @@ For tightly coupled domains (and AWS services are deeply coupled: Lambda → Dyn
 
 ## Pattern 4: Guardrails as Workflow, Not Gatekeeping
 
-In `aws-dev-toolkit`, the first implementation of mandatory security review used a post-execution shell hook on every IaC file edit. When the script failed, the agent flow broke entirely. The fix was moving enforcement into the AI workflow itself. The `iac-reviewer` agent now runs as a mandatory step in the planning chain. If something goes wrong, it surfaces the issue rather than crashing the session.
+In `aws-dev-toolkit`, security review runs as a step in the planning chain rather than a post-execution shell hook. The difference is context: the `iac-reviewer` agent understands what's being designed, so it can distinguish an ALB security group from an RDS security group. A shell hook running after the fact can only do static pattern matching — it doesn't know intent.
 
 The principle: **embed guardrails in the workflow, not around it.** Make them participants in the process, not external validators that can break the process.
 
 The reviewer checks for standard issues (public security groups on databases, unencrypted storage, missing IMDSv2, public RDS) and evaluates context. A security group opening for an ALB is fine; the same opening for an RDS instance is not.
 
-For organizations building their own toolkits, consider also encoding your non-negotiable rules as baseline policies. In AWS, that's SCPs:
+For organizations building their own toolkits, consider also encoding your non-negotiable rules as baseline policies. If you're encoding guardrails for an enterprise toolkit, these are the non-negotiables worth hardcoding. In AWS, that's SCPs:
 
 1. No public security groups on non-web resources
 2. No unencrypted storage (S3, RDS, EBS)
@@ -93,7 +91,17 @@ Early versions of the planning skills in `aws-dev-toolkit` dumped 15 surface-lev
 
 The last two categories catch issues that tend to surface late in design. Getting the question flow right matters. Progressive discovery leads to better context and better recommendations than a flat questionnaire.
 
-## Try It or Build Your Own
+### A Note on Token Costs
+
+A reasonable concern: does 34 skills bloat the context window? Not really, because Claude Code only injects skill **names and descriptions** into every conversation, roughly 10KB (~2,500 tokens) for all 34 skills. The full skill content (~318KB across all SKILL.md files) is loaded only when a skill is actually invoked, and reference materials (~310KB more) only when the skill explicitly reads them.
+
+The always-on cost of 34 skills is about the same as a single page of documentation. The deep knowledge (service-specific procedures, reference architectures, decision trees) stays on disk until needed. This is the plugin equivalent of lazy loading: you pay for the index, not the library.
+
+For comparison, a typical CLAUDE.md file runs 2-5KB. The skill index adds roughly one CLAUDE.md worth of context. On a 200K context window that's ~1.2%; on a 1M window it's negligible. The trade-off is worth it: 2,500 tokens of routing information gives the model enough signal to activate any of 34 specialized workflows without the user memorizing slash commands.
+
+If you're building a toolkit and worried about index bloat, keep descriptions under 2-3 sentences each. The trigger phrases ("use when...") matter more than prose. They're what the model pattern-matches against. Verbose descriptions don't improve routing; they just waste tokens.
+
+## Getting Started
 
 The patterns generalize to any tightly coupled domain: cloud infrastructure, data engineering, platform engineering, compliance.
 
@@ -104,16 +112,6 @@ The patterns generalize to any tightly coupled domain: cloud infrastructure, dat
 5. **Use progressive discovery.** Conversations beat questionnaires.
 
 Start with 3-5 skills that cover your team's most repetitive decisions. Add agents when you find yourself chaining skills manually. Consolidate when the cross-cutting concerns start falling through the cracks.
-
-### A Note on Token Costs
-
-A reasonable concern: does 34 skills bloat the context window? Not really, because Claude Code only injects skill **names and descriptions** into every conversation, roughly 10KB (~2,500 tokens) for all 34 skills. The full skill content (~318KB across all SKILL.md files) is loaded only when a skill is actually invoked, and reference materials (~310KB more) only when the skill explicitly reads them.
-
-The always-on cost of 34 skills is about the same as a single page of documentation. The deep knowledge (service-specific procedures, reference architectures, decision trees) stays on disk until needed. This is the plugin equivalent of lazy loading: you pay for the index, not the library.
-
-For comparison, a typical CLAUDE.md file runs 2-5KB. The skill index adds roughly one CLAUDE.md worth of context. On a 200K context window that's ~1.2%; on a 1M window it's negligible. The trade-off is worth it: 2,500 tokens of routing information gives the model enough signal to activate any of 34 specialized workflows without the user memorizing slash commands.
-
-If you're building a toolkit and worried about index bloat, keep descriptions under 2-3 sentences each. The trigger phrases ("use when...") matter more than prose. They're what the model pattern-matches against. Verbose descriptions don't improve routing; they just waste tokens.
 
 ### Try `aws-dev-toolkit`
 
@@ -144,9 +142,9 @@ Or invoke explicitly:
 /aws-dev-toolkit:iac-scaffold cdk "VPC with public/private subnets and NAT"
 /aws-dev-toolkit:aws-health-check us-east-1
 /aws-dev-toolkit:aws-diagram from-iac
-/aws-dev-toolkit:strands-agent "Classification agent with Bedrock"
+/aws-dev-toolkit:strands-agent "Create a classification agent with Bedrock"
 ```
 
 Full documentation in the [README](https://github.com/rsmets/aws-dev-toolkit). If something doesn't work or there's a service skill you want, [open an issue](https://github.com/rsmets/aws-dev-toolkit/issues).
 
-Thanks for making it this far!
+Your domain has the same kind of accumulated knowledge worth encoding. [Build your own plugin](https://code.claude.com/docs/en/plugins) and start compounding it.
